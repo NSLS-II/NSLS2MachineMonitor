@@ -1,10 +1,14 @@
 import time
 from datetime import datetime
 import yaml
+import logging
+
 from slack import WebClient
 from slack.errors import SlackApiError
 from caproto.threading.client import Context
 
+import logging
+logging.basicConfig(filename='example.log',level=logging.DEBUG)
 
 pv_data = dict()
 pv_data['_updated'] = False
@@ -12,6 +16,7 @@ pv_data['_update'] = 0
 
 
 def read_config(filename='secrets.yml'):
+    logging.debug("Reading config file %s", filename)
     with open(filename) as file:
         config = yaml.load(file, Loader=yaml.FullLoader)
     return config
@@ -19,20 +24,31 @@ def read_config(filename='secrets.yml'):
 
 def post_message(message, config):
     client = WebClient(token=config['token'])
-
+    channel = config['channel']
     try:
         response = client.chat_postMessage(
-            channel=config['channel'],
-            text=message)
+            channel=channel, text=message)
         assert response["message"]["text"] == message
+        logging.debug("Send message \"%s\" to channel %s", message, channel)
     except SlackApiError as e:
         assert e.response["ok"] is False
         assert e.response["error"]
-        print(f"Got an error: {e.response['error']}")
+        logging.error("SLACK Client reported error %s", e.response['error'])
+
+
+def term_string(array):
+    for a in array:
+        if a == 0:
+            break
+        else:
+            yield a
 
 
 def pv_callback(sub, response):
-    msg = "".join(map(chr, [c for c in response.data if c != 0]))
+    msg = ""
+
+    msg = "".join(map(chr, 
+        [c for c in term_string(response.data)]))
     
     pv_data[sub.pv.name] = msg
     pv_data['_update'] = time.time()
@@ -42,8 +58,7 @@ def pv_callback(sub, response):
     if timestamp > pv_data["timestamp"]:
         pv_data['timestamp'] = timestamp
 
-    print('Received response from', sub.pv.name, response)
-    print(pv_data)
+    logging.debug('Received response \"%s\" from %s', response, sub.pv.name)
 
 
 def setup_pvs(pv_names):
@@ -53,6 +68,7 @@ def setup_pvs(pv_names):
         sub = pv.subscribe(data_type='time')
         sub.add_callback(pv_callback)
         pv_data[pv.name] = ""
+        logging.debug("Subscribed to PV : %s", pv.name)
 
     pv_data['timestamp'] = 0
     return sub
@@ -72,5 +88,4 @@ if __name__ == "__main__":
             msg += ", ".join([pv_data[m] for m in config['pvs']['msg']])
             post_message(msg, config['slack'])
             pv_data['_updated'] = True
-        print(delta, pv_data)
         time.sleep(config['main']['poll_time'])

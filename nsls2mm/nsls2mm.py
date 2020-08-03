@@ -18,11 +18,11 @@ def read_config(filename='secrets.yml'):
 
 
 def post_message(message, config):
-    client = WebClient(token=config['slack']['api_token'])
+    client = WebClient(token=config['token'])
 
     try:
         response = client.chat_postMessage(
-            channel='#stutest',
+            channel=config['channel'],
             text=message)
         assert response["message"]["text"] == message
     except SlackApiError as e:
@@ -62,7 +62,7 @@ if __name__ == "__main__":
     config = read_config()
     sub = setup_pvs(config['pvs']['msg'])
 
-    time.sleep(10)
+    time.sleep(config['main']['startup_delay'])
 
     while(True):
         delta = time.time() - pv_data['_update']
@@ -70,7 +70,7 @@ if __name__ == "__main__":
             msg = str(datetime.fromtimestamp(pv_data['timestamp']))
             msg += " : "
             msg += ", ".join([pv_data[m] for m in config['pvs']['msg']])
-            post_message(msg, config)
+            post_message(msg, config['slack'])
             pv_data['_updated'] = True
         print(delta, pv_data)
-        time.sleep(1)
+        time.sleep(config['main']['poll_time'])

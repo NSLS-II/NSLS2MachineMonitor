@@ -1,0 +1,2 @@
+include versioneer.py
+include nsls2mm/_version.py

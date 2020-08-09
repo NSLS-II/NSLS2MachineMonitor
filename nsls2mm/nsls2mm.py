@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 from datetime import datetime
@@ -9,6 +10,7 @@ from slack import WebClient
 from slack.errors import SlackApiError
 import caproto
 from caproto.threading.client import Context
+# from caproto.asyncio.client import Context
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +29,7 @@ def read_config(filename):
 
 
 def post_message(text, blocks, config):
-    client = WebClient(token=config['token'])
+    client = WebClient(token=os.environ["SLACK_API_TOKEN"])
     channel = config['channel']
     logger.debug(
         "Sending message to channel %s = %s : %s",
@@ -193,6 +195,10 @@ def main():
     parser.add_argument('--config', dest='configfile', default='nsls2mm.yml')
 
     args = parser.parse_args()
+
+    # Check for token
+    if not "SLACK_API_TOKEN" in os.environ:
+        raise ValueError("No SLACK_API_TOKEN in environmental variables.")
 
     # Setup logger
 

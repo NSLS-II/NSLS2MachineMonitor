@@ -1,0 +1,43 @@
+main:
+  poll_time: 1
+  startup_delay: 10
+  update_delay: 10
+  beacon: false
+  beacon_delay: 86400
+  beacon_message: "No new messages..."
+message:
+  divider: false
+  time_format: "%B %d, %Y at %H:%M %Z"
+  head: "Message from the NSLS-II Operators"
+  tail: "NSLS-II Status on the web at <https://status.nsls2.bnl.gov|status.nsls2.bnl.gov>."
+slack:
+  channel: '#ops-messages'
+pvs:
+  message:
+    - pv: 'SR-OPS{}Mode-Sts'
+      enum:
+        - Normal Operations
+        - Machine Setup
+        - Accelerator Studies
+        - Beamline Studies
+        - Failure
+        - Maintenance
+        - Shutdown
+        - Unscheduled Operations
+        - Decay Mode Operations
+      format: "Machine state : _{}_ "
+    - pv: "SR:C03-BI{DCCT:1}I:Real-I"
+      format: "Ring current : _{:.2f}_ mA"
+      numerical:
+    - pv: 'SR-EPS{PLC:1}Sts:MstrSh-Sts'
+      enum:
+        - Disabled
+        - Enabled
+      format: "Shutters : _{}_"
+    - pv: 'OP{1}Message'
+      format: "\n*{}*"
+    - pv: 'OP{2}Message'
+      format: "*{}*"
+  trigger:
+    - pv: 'OP{Msg:1}Update-Cmd'
+  #  - pv: 'OP{Msg:PwrDip}-Cmd'

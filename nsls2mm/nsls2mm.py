@@ -22,7 +22,7 @@ captoto_logger.setLevel(logging.WARNING)
 
 
 def read_config(filename):
-    logger.debug("Reading config file %s", filename)
+    logger.info("Reading config file %s", filename)
     with open(filename) as file:
         config = yaml.load(file, Loader=yaml.FullLoader)
     return config
@@ -31,7 +31,7 @@ def read_config(filename):
 def post_message(text, blocks, config):
     client = WebClient(token=os.environ["SLACK_API_TOKEN"])
     channel = config['channel']
-    logger.debug(
+    logger.info(
         "Sending message to channel %s = %s : %s",
         channel, str(text).replace('\n', '\\n'),
         str(blocks).replace('\n', '\\n'))
@@ -79,7 +79,7 @@ def trigger_callback(sub, response):
 def subscribe_pvs(ctx, pv_names, callback):
     pvs = ctx.get_pvs(*pv_names)
     for pv in pvs:
-        logger.debug('Setting up PV %s', pv)
+        logger.info('Setting up PV %s', pv)
         sub = pv.subscribe(data_type='time')
         sub.add_callback(callback)
         global_pv_data[pv.name] = dict(value=None, timestamp=None)
@@ -168,18 +168,21 @@ def main_loop(config):
         if global_data['triggered']:
             delta = time.time() - global_data['last_trigger']
             if delta > config['main']['update_delay']:
-                logger.debug("Trigger message send ....")
+                logger.info("Message send triggered.")
                 text, msg_blocks = format_message_blocks(config)
 
                 if post_message(text, msg_blocks, config['slack']):
                     global_data['triggered'] = False
                     last_update = time.time()
+
         if config['main']['beacon']:
             delta = time.time() - last_update
             if delta > config['main']['beacon_delay']:
+                logger.info("Beacon message triggered.")
                 if post_message(config['main']['beacon_message'],
                                 None, config['slack']):
                     last_update = time.time()
+
         else:
             last_update = time.time()
 
@@ -231,4 +234,7 @@ def main():
     time.sleep(config['main']['startup_delay'])
 
     # Engage .....
-    main_loop(config)
+    try:
+        main_loop(config)
+    except KeyboardInterrupt:
+        return 0

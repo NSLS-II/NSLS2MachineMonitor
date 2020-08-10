@@ -200,7 +200,7 @@ def main():
     args = parser.parse_args()
 
     # Check for token
-    if not "SLACK_API_TOKEN" in os.environ:
+    if "SLACK_API_TOKEN" not in os.environ:
         raise ValueError("No SLACK_API_TOKEN in environmental variables.")
 
     # Setup logger

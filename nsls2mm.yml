@@ -39,5 +39,7 @@ pvs:
     - pv: 'OP{2}Message'
       format: "*{}*"
   trigger:
-    - pv: 'OP{Msg:1}Update-Cmd'
-  #  - pv: 'OP{Msg:PwrDip}-Cmd'
+#    - pv: 'OP{Msg:1}Update-Cmd'
+#    - pv: 'OP{Msg:PwrDip}-Cmd'
+    - pv: 'OP{1}Message'
+    - pv: 'OP{2}Message'

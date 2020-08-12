@@ -9,7 +9,8 @@ message:
   divider: false
   time_format: "%B %d, %Y at %H:%M %Z"
   head: "Message from the NSLS-II Operators"
-  tail: "NSLS-II Status on the web at <https://status.nsls2.bnl.gov|status.nsls2.bnl.gov>."
+#  tail: "NSLS-II Status on the web at <https://status.nsls2.bnl.gov|status.nsls2.bnl.gov>."
+  info: ":information_source: *<https://status.nsls2.bnl.gov|Status on the web at status.nsls2.bnl.gov>*"
 slack:
   channel: '#ops-messages'
 pvs:

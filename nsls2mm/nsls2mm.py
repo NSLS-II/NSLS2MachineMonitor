@@ -5,9 +5,10 @@ from datetime import datetime
 import argparse
 import yaml
 import logging
+import urllib
 
 from slack import WebClient
-from slack.errors import SlackApiError
+from slack.errors import (SlackApiError, SlackClientError)
 import caproto
 from caproto.threading.client import Context
 # from caproto.asyncio.client import Context
@@ -42,12 +43,17 @@ def post_message(text, blocks, config):
         logger.debug(
             "Slack message response %s",
             str(response["message"]).replace('\n', '\\n'))
-        return True
-    except SlackApiError as e:
+
+    except SlackClientError as e:
         assert e.response["ok"] is False
         assert e.response["error"]
         logger.error("SLACK Client reported error %s", e.response['error'])
         return False
+    except urllib.error.URLError as e:
+        logger.error("Communication error %s", e)
+        return False
+
+    return True
 
 
 def term_string(array):
@@ -146,13 +152,27 @@ def format_message_blocks(config):
         }
     })
 
-    blocks.append({
-        "type": "section",
-        "text": {
-            "type": "mrkdwn",
-            "text": config['message']['tail']
-        }
-    })
+    print(config['message'])
+
+    if 'tail' in config['message']:
+        blocks.append({
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": config['message']['tail']
+            }
+        })
+
+    if 'info' in config['message']:
+        blocks.append({
+            "type": "context",
+            "elements": [
+                {
+                    "type": "mrkdwn",
+                    "text": config['message']['info']
+                }
+            ],
+        })
 
     if config['message']['divider']:
         blocks.append({
